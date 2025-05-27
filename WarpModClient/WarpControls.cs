@@ -49,170 +49,85 @@ namespace WarpDriveClient
             string val;
             double _speed;
 
-            IMyTerminalAction startWarp = MyAPIGateway.TerminalControls.CreateAction<IMyUpgradeModule>("ToggleWarp");
-            startWarp.Enabled = block => BlockSubtypeSpeeds.ContainsKey(block.BlockDefinition.SubtypeName);
-            startWarp.Name = new StringBuilder("Warp");
-            startWarp.Action = b =>
+            MyAPIGateway.TerminalControls.CustomControlGetter += (block, controls) =>
             {
-                var block = b as IMyCubeBlock;
-                if (block == null)
+                if (block?.BlockDefinition.SubtypeName == null || !BlockSubtypeSpeeds.ContainsKey(block.BlockDefinition.SubtypeName))
                     return;
 
-                var grid = block.CubeGrid;
-                if (grid == null)
-                    return;
-                string input = gpsInputStorage.TryGetValue(block.EntityId, out val) ? val : null;
+                var gpsInput = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlTextbox, IMyTerminalBlock>("WarpGPSInput");
+                gpsInput.Title = MyStringId.GetOrCompute("Target GPS");
+                gpsInput.Tooltip = MyStringId.GetOrCompute("Enter a GPS coordinate or leave blank for Free Warp");
+                gpsInput.Getter = b => gpsInputStorage.TryGetValue(b.EntityId, out val) ? new StringBuilder(val) : new StringBuilder();
+                gpsInput.Setter = (b, v) => gpsInputStorage[b.EntityId] = v.ToString();
+                gpsInput.Enabled = b => true;
+                gpsInput.Visible = b => true;
 
-                string gpsName = "Destination";
-                Vector3D? destination = null;
-                Vector3D gps;
-                string name;
-                if (TryParseGPS(input, out gps, out name))
-                {
-                    destination = gps;
-                    gpsName = name;
-                }
+                var warpButton = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlButton, IMyTerminalBlock>("StartWarp");
+                warpButton.Title = MyStringId.GetOrCompute("Toggle Warp");
+                warpButton.Tooltip = MyStringId.GetOrCompute("Start guided or free warp");
+                warpButton.Enabled = b => true;
+                warpButton.Visible = b => true;
+                warpButton.Action = ToggleWarpAction;
 
-                WarpMode mode = destination.HasValue ? WarpMode.Guided : WarpMode.Free;
-
-                MyAPIGateway.Utilities.ShowNotification(mode == WarpMode.Guided ? $"Initiating warp to {gpsName}" : "Initiating free warp", 3000, "White");
-
-                double speed = 30000; // fallback default
-                double configuredSpeed = 0;
-                var subtype = block.BlockDefinition.SubtypeName;
-                if (!string.IsNullOrWhiteSpace(subtype) && BlockSubtypeSpeeds.TryGetValue(subtype, out configuredSpeed))
-                {
-                    speed = configuredSpeed;
-                }
-
-                var msg = new WarpRequestMessage
-                {
-                    GridId = grid.EntityId,
-                    Destination = destination,
-                    Speed = speed,
-                    Mode = mode
-                };
-
-                MyAPIGateway.Multiplayer.SendMessageToServer(WARP_REQUEST_ID, MyAPIGateway.Utilities.SerializeToBinary(msg));
-
+                controls.Add(gpsInput);
+                controls.Add(warpButton);
             };
-            startWarp.Icon = "Textures\\GUI\\Icons\\Actions\\Toggle.dds";
-            MyAPIGateway.TerminalControls.AddAction<IMyUpgradeModule>(startWarp);
 
-            var gpsInput = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlTextbox, IMyUpgradeModule>("WarpGPSInput");
-            gpsInput.Title = MyStringId.GetOrCompute("Target GPS");
-            gpsInput.Tooltip = MyStringId.GetOrCompute("Enter a GPS coordinate or leave blank for Free Warp");
-            gpsInput.Getter = b => gpsInputStorage.TryGetValue(b.EntityId, out val) ? new StringBuilder(val) : new StringBuilder();
-            gpsInput.Setter = (b, v) => gpsInputStorage[b.EntityId] = v.ToString();
-            gpsInput.Enabled = b => true;
-            gpsInput.Visible = block => BlockSubtypeSpeeds.ContainsKey(block.BlockDefinition.SubtypeName);
+            var action = MyAPIGateway.TerminalControls.CreateAction<IMyTerminalBlock>("ToggleWarp");
+            action.Name = new StringBuilder("Toggle Warp");
+            action.Icon = "Textures\\GUI\\Icons\\Actions\\Toggle.dds";
+            action.Enabled = block => block != null && BlockSubtypeSpeeds.ContainsKey(block.BlockDefinition.SubtypeName);
+            action.ValidForGroups = false;
+            action.Action = ToggleWarpAction;
+            action.Writer = (block, builder) => builder.Append("Warp");
 
-            MyAPIGateway.TerminalControls.AddControl<IMyUpgradeModule>(gpsInput);
-
-            var warpButton = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlButton, IMyUpgradeModule>("StartWarp");
-            warpButton.Title = MyStringId.GetOrCompute("Toggle Warp");
-            warpButton.Tooltip = MyStringId.GetOrCompute("Start guided or free warp");
-            warpButton.Visible = block => BlockSubtypeSpeeds.ContainsKey(block.BlockDefinition.SubtypeName);
-            warpButton.Action = b =>
-            {
-                var block = b as IMyCubeBlock;
-                if (block == null)
-                    return;
-
-                var grid = block.CubeGrid;
-                if (grid == null)
-                    return;
-                string input = gpsInputStorage.TryGetValue(block.EntityId, out val) ? val : null;
-
-                string gpsName = "Destination";
-                Vector3D? destination = null;
-                Vector3D gps;
-                string name;
-                if (TryParseGPS(input, out gps, out name))
-                {
-                    destination = gps;
-                    gpsName = name;
-                }
-
-                WarpMode mode = destination.HasValue ? WarpMode.Guided : WarpMode.Free;
-
-                MyAPIGateway.Utilities.ShowNotification(mode == WarpMode.Guided ? $"Initiating warp to {gpsName}" : "Initiating free warp", 3000, "White");
-
-                double speed = 30000; // fallback default
-                double configuredSpeed = 0;
-                var subtype = block.BlockDefinition.SubtypeName;
-                if (!string.IsNullOrWhiteSpace(subtype) && BlockSubtypeSpeeds.TryGetValue(subtype, out configuredSpeed))
-                {
-                    speed = configuredSpeed;
-                }
-
-                var msg = new WarpRequestMessage
-                {
-                    GridId = grid.EntityId,
-                    Destination = destination,
-                    Speed = speed,
-                    Mode = mode
-                };
-
-                MyAPIGateway.Multiplayer.SendMessageToServer(WARP_REQUEST_ID, MyAPIGateway.Utilities.SerializeToBinary(msg));
-
-            };
-            warpButton.Enabled = b => true;
-            MyAPIGateway.TerminalControls.AddControl<IMyUpgradeModule>(warpButton);
-
-            var toggleAction = MyAPIGateway.TerminalControls.CreateAction<IMyTerminalBlock>("ToggleWarp");
-            toggleAction.Name = new StringBuilder("Toggle Warp");
-            toggleAction.Action = b =>
-            {
-                var block = b as IMyCubeBlock;
-                if (block == null)
-                    return;
-
-                var grid = block.CubeGrid;
-                if (grid == null)
-                    return;
-                string input = gpsInputStorage.TryGetValue(block.EntityId, out val) ? val : null;
-
-                string gpsName = "Destination";
-                Vector3D? destination = null;
-                Vector3D gps;
-                string name;
-                if (TryParseGPS(input, out gps, out name))
-                {
-                    destination = gps;
-                    gpsName = name;
-                }
-
-                WarpMode mode = destination.HasValue ? WarpMode.Guided : WarpMode.Free;
-
-                MyAPIGateway.Utilities.ShowNotification(mode == WarpMode.Guided ? $"Initiating warp to {gpsName}" : "Initiating free warp", 3000, "White");
-
-                double speed = 30000; // fallback default
-                double configuredSpeed = 0;
-                var subtype = block.BlockDefinition.SubtypeName;
-                if (!string.IsNullOrWhiteSpace(subtype) && BlockSubtypeSpeeds.TryGetValue(subtype, out configuredSpeed))
-                {
-                    speed = configuredSpeed;
-                }
-
-                var msg = new WarpRequestMessage
-                {
-                    GridId = grid.EntityId,
-                    Destination = destination,
-                    Speed = speed,
-                    Mode = mode
-                };
-
-                MyAPIGateway.Multiplayer.SendMessageToServer(WARP_REQUEST_ID, MyAPIGateway.Utilities.SerializeToBinary(msg));
-            };
-            toggleAction.Writer = (block, builder) => builder.Append("Toggle Warp");
-            toggleAction.Enabled = block => block?.BlockDefinition.SubtypeName?.ToLower().Contains("warpdrive") == true;
-            toggleAction.ValidForGroups = false;
-
-            MyAPIGateway.TerminalControls.AddAction<IMyTerminalBlock>(toggleAction);
+            MyAPIGateway.TerminalControls.AddAction<IMyTerminalBlock>(action);
 
 
             _controlsCreated = true;
+        }
+
+        private static void ToggleWarpAction(IMyTerminalBlock block)
+        {
+            string val;
+            var blockRef = block as IMyCubeBlock;
+            if (blockRef == null)
+                return;
+
+            var grid = blockRef.CubeGrid;
+            if (grid == null)
+                return;
+
+            string input = gpsInputStorage.TryGetValue(blockRef.EntityId, out val) ? val : null;
+
+            string gpsName = "Destination";
+            Vector3D? destination = null;
+            Vector3D gps;
+            string name;
+            double configuredSpeed = 0;
+            if (TryParseGPS(input, out gps, out name))
+            {
+                destination = gps;
+                gpsName = name;
+            }
+
+            WarpMode mode = destination.HasValue ? WarpMode.Guided : WarpMode.Free;
+
+            MyAPIGateway.Utilities.ShowNotification(mode == WarpMode.Guided ? $"Initiating warp to {gpsName}" : "Initiating free warp", 3000, "White");
+
+            double speed = BlockSubtypeSpeeds.TryGetValue(blockRef.BlockDefinition.SubtypeName, out configuredSpeed)
+                ? configuredSpeed : 30000;
+
+            var msg = new WarpRequestMessage
+            {
+                GridId = grid.EntityId,
+                Destination = destination,
+                Speed = speed,
+                Mode = mode
+            };
+
+            var data = MyAPIGateway.Utilities.SerializeToBinary(msg);
+            MyAPIGateway.Multiplayer.SendMessageToServer(WARP_REQUEST_ID, data);
         }
 
         private static bool TryParseGPS(string text, out Vector3D result, out string name)

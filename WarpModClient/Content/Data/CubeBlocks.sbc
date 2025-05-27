@@ -1,0 +1,115 @@
+<?xml version="1.0"?>
+<Definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<CubeBlocks>
+		<Definition xsi:type="MyObjectBuilder_UpgradeModuleDefinition">
+			<Id>
+				<TypeId>UpgradeModule</TypeId>
+				<SubtypeId>CivilianWarpDriveSmall</SubtypeId>
+			</Id>
+			<Public>true</Public>
+			<DisplayName>{LOC:DisplayName_WarpDrive_Civilian}</DisplayName>
+			<Icon>Textures\GUI\Icons\Cubes\BasicMissionBlock_Task.dds</Icon>
+			<Description></Description>
+			<CubeSize>Small</CubeSize>
+			<BlockTopology>TriangleMesh</BlockTopology>
+			<Size x="1" y="1" z="1"/>
+			<ModelOffset x="0" y="0" z="0"/>
+			<Model>Models\Cubes\small\BasicMissionblock.mwm</Model>
+			<Components>
+				<Component Subtype="SteelPlate" Count="4"/>
+				<Component Subtype="MetalGrid" Count="5"/>
+				<Component Subtype="GravityGenerator" Count="2"/>
+				<Component Subtype="Detector" Count="2"/>
+				<Component Subtype="PowerCell" Count="12"/>
+				<Component Subtype="Superconductor" Count="100"/>
+				<Component Subtype="WarpComponent" Count="25"/>
+				<Component Subtype="Computer" Count="30"/>
+				<Component Subtype="Construction" Count="4"/>
+				<Component Subtype="SteelPlate" Count="2"/>
+			</Components>
+			<CriticalComponent Subtype="Computer" Index="0"/>
+			<MountPoints>
+                <MountPoint Side="Bottom" StartX="0" StartY="0" EndX="1" EndY="1" Default="true" />
+                <MountPoint Side="Front" StartX="0" StartY="0" EndX="1" EndY="1" />
+                <MountPoint Side="Back" StartX="0" StartY="0" EndX="1" EndY="1" />
+                <MountPoint Side="Right" StartX="0" StartY="0" EndX="1" EndY="1" />
+                <MountPoint Side="Left" StartX="0" StartY="0" EndX="1" EndY="1" />
+                <MountPoint Side="Top" StartX="0" StartY="0" EndX="1" EndY="1" />
+            </MountPoints>
+			<BuildProgressModels>
+				<Model BuildPercentUpperBound="0.33" File="Models\Cubes\Small\DroneFeatureBlockConstruction_1.mwm" />
+                <Model BuildPercentUpperBound="0.66" File="Models\Cubes\Small\DroneFeatureBlockConstruction_2.mwm" />
+                <Model BuildPercentUpperBound="1.00" File="Models\Cubes\Small\DroneFeatureBlockConstruction_3.mwm" />
+			</BuildProgressModels>
+			<BlockPairName>CivilianWarpDrive</BlockPairName>
+			<MirroringY>Z</MirroringY>
+			<MirroringZ>Y</MirroringZ>
+			<EdgeType>Light</EdgeType>
+			<Upgrades/>
+			<ResourceSinkGroup>Utility</ResourceSinkGroup>
+			<RequiredPowerInput>1</RequiredPowerInput>
+			<DamageEffectId>214</DamageEffectId>
+			<PCU>250</PCU>
+			<IsAirTight>true</IsAirTight>
+		</Definition>
+		<Definition xsi:type="MyObjectBuilder_UpgradeModuleDefinition">
+			<Id>
+				<TypeId>UpgradeModule</TypeId>
+				<SubtypeId>CivilianWarpDriveLarge</SubtypeId>
+			</Id>
+			<Public>true</Public>
+			<DisplayName>{LOC:DisplayName_WarpDrive_Civilian}</DisplayName>
+			<Icon>Textures\GUI\Icons\Cubes\BasicMissionBlock_Task.dds</Icon>
+			<Description></Description>
+			<CubeSize>Large</CubeSize>
+			<BlockTopology>TriangleMesh</BlockTopology>
+			<Size x="1" y="1" z="1"/>
+			<ModelOffset x="0" y="0" z="0"/>
+			<Model>Models\Cubes\large\BasicMissionblock.mwm</Model>
+			<Components>
+				<Component Subtype="SteelPlate" Count="40"/>
+				<Component Subtype="MetalGrid" Count="50"/>
+				<Component Subtype="GravityGenerator" Count="20"/>
+				<Component Subtype="Detector" Count="20"/>
+				<Component Subtype="PowerCell" Count="120"/>
+				<Component Subtype="Superconductor" Count="1000"/>
+				<Component Subtype="WarpComponent" Count="50"/>
+				<Component Subtype="Computer" Count="300"/>
+				<Component Subtype="Construction" Count="40"/>
+				<Component Subtype="SteelPlate" Count="20"/>
+			</Components>
+			<CriticalComponent Subtype="Computer" Index="0"/>
+			<MountPoints>
+                <MountPoint Side="Bottom" StartX="0" StartY="0" EndX="0.3" EndY="1" Default="true" />
+                <MountPoint Side="Bottom" StartX="0.7" StartY="0" EndX="1" EndY="1" />
+                <MountPoint Side="Bottom" StartX="0.3" StartY="0.15" EndX="0.7" EndY="0.85" />
+                <MountPoint Side="Left" StartX="0" StartY="0" EndX="1" EndY="1" />
+                <MountPoint Side="Right" StartX="0" StartY="0" EndX="1" EndY="1" />
+                <MountPoint Side="Back" StartX="0" StartY="0" EndX="0.3" EndY="1" />
+                <MountPoint Side="Back" StartX="0.7" StartY="0" EndX="1" EndY="1" />
+                <MountPoint Side="Back" StartX="0.3" StartY="0.15" EndX="0.7" EndY="0.85" />
+                <MountPoint Side="Front" StartX="0" StartY="0" EndX="0.3" EndY="1" />
+                <MountPoint Side="Front" StartX="0.7" StartY="0" EndX="1" EndY="1" />
+                <MountPoint Side="Front" StartX="0.3" StartY="0.15" EndX="0.7" EndY="0.85" />
+                <MountPoint Side="Top" StartX="0" StartY="0" EndX="0.3" EndY="1" />
+                <MountPoint Side="Top" StartX="0.7" StartY="0" EndX="1" EndY="1" />
+                <MountPoint Side="Top" StartX="0.3" StartY="0.15" EndX="0.7" EndY="0.85" />
+            </MountPoints>
+			<BuildProgressModels>
+				<Model BuildPercentUpperBound="0.33" File="Models\Cubes\Large\DroneFeatureBlockConstruction_1.mwm" />
+                <Model BuildPercentUpperBound="0.66" File="Models\Cubes\Large\DroneFeatureBlockConstruction_2.mwm" />
+                <Model BuildPercentUpperBound="1.00" File="Models\Cubes\Large\DroneFeatureBlockConstruction_3.mwm" />
+			</BuildProgressModels>
+			<BlockPairName>CivilianWarpDrive</BlockPairName>
+			<MirroringY>Z</MirroringY>
+			<MirroringZ>Y</MirroringZ>
+			<EdgeType>Light</EdgeType>
+			<Upgrades/>
+			<ResourceSinkGroup>Utility</ResourceSinkGroup>
+			<RequiredPowerInput>5.5</RequiredPowerInput>
+			<DamageEffectId>214</DamageEffectId>
+			<PCU>250</PCU>
+			<IsAirTight>true</IsAirTight>
+		</Definition>
+	</CubeBlocks>
+</Definitions>
