@@ -35,7 +35,7 @@ namespace WarpDriveClient
     {
         private const ushort PACKET_ID_START = 42154;
 
-        internal static readonly Dictionary<long, WarpData> ActiveWarps = new Dictionary<long, WarpData>();
+        public static Dictionary<long, ClientWarpState> ActiveWarps = new Dictionary<long, ClientWarpState>();
 
         public override void LoadData()
         {
@@ -51,71 +51,76 @@ namespace WarpDriveClient
         {
             var message = MyAPIGateway.Utilities.SerializeFromBinary<WarpStartMessage>(data);
 
-            if (!ActiveWarps.ContainsKey(message.GridId))
+            IMyEntity ent;
+            if (MyAPIGateway.Entities.TryGetEntityById(message.GridId, out ent))
             {
-                MatrixD matrix = ToMatrix(message.StartMatrixValues);
-
-                ActiveWarps[message.GridId] = new WarpData
+                ClientWarpState state;
+                if (WarpStartReceiver.ActiveWarps.TryGetValue(ent.EntityId, out state))
                 {
-                    StartMatrix = matrix,
-                    StepVector = message.StepVector
-                };
-                IMyEntity ent;
-                if (MyAPIGateway.Entities.TryGetEntityById(message.GridId, out ent))
-                {
-                    ent.PositionComp.SetWorldMatrix(ref matrix);
+                    state.StartMatrix = message.ToMatrix();
+                    state.StepVector = message.StepVector;
+                    ent.PositionComp.SetWorldMatrix(ref state.StartMatrix);
+                    ent.Physics?.ClearSpeed();
+                    SoundUtility.Play(ent as IMyCubeGrid, WarpSounds.WarpCharge);
                 }
+                
             }
+
+            
+
         }
 
         public override void UpdateAfterSimulation()
         {
-            foreach (var key in ActiveWarps.Keys.ToList())
+            if (MyAPIGateway.Session != null)
+                if (MyAPIGateway.Session.IsServer)
+                    return;
+            foreach (var kv in WarpStartReceiver.ActiveWarps)
             {
+                MyAPIGateway.Utilities.ShowNotification($"State: {kv.Value.State}", 20, "Red");
+                kv.Value.TrySendPendingRequest();
+            }
+            foreach (var pair in ActiveWarps.ToList())
+            {
+                var warp = pair.Value;
                 IMyEntity ent;
-                if (MyAPIGateway.Entities.TryGetEntityById(key, out ent))
-                {
-                    var data = ActiveWarps[key];
-                    var matrix = ent.WorldMatrix;
-                    matrix.Translation += data.StepVector;
-                    ent.PositionComp.SetWorldMatrix(ref matrix);
-                    ent.Physics?.ClearSpeed();
 
-                    // ✅ Use classic cast for .NET Framework 4.8
-                    var grid = ent as IMyCubeGrid;
-                    if (grid != null)
-                    {
-                        WarpTrailRenderer.DrawWarpTrailsFromThrusters(grid);
-                    }
+                if (!MyAPIGateway.Entities.TryGetEntityById(warp.GridId, out ent))
+                    continue;
+                
+                switch (warp.State)
+                {
+                    case WarpVisualState.Charging:
+                        MyAPIGateway.Utilities.ShowNotification($"State: Charging", 20, "Red");
+
+                        if (--warp.ChargingTicksRemaining <= 0)
+                        {
+                            MyAPIGateway.Utilities.ShowNotification($"State: Warping", 20, "Red");
+
+                            warp.State = WarpVisualState.Warping;
+                            SoundUtility.Play(ent as IMyCubeGrid, WarpSounds.WarpTravel);
+                        }
+                        break;
+
+                    case WarpVisualState.Warping:
+                        var matrix = ent.WorldMatrix;
+                        matrix.Translation += warp.StepVector;
+                        ent.PositionComp.SetWorldMatrix(ref matrix);
+                        ent.Physics?.ClearSpeed();
+
+                        var grid = ent as IMyCubeGrid;
+                        if (grid != null)
+                            WarpTrailRenderer.DrawWarpTrailsFromThrusters(grid);
+                        break;
+
+                    case WarpVisualState.Cooldown:
+                        if (--warp.CooldownTicksRemaining <= 0)
+                            ActiveWarps.Remove(warp.GridId);
+                        break;
                 }
             }
+
         }
-
-
-
-        private static MatrixD ToMatrix(double[] arr)
-        {
-            return new MatrixD
-            {
-                M11 = arr[0],
-                M12 = arr[1],
-                M13 = arr[2],
-                M14 = arr[3],
-                M21 = arr[4],
-                M22 = arr[5],
-                M23 = arr[6],
-                M24 = arr[7],
-                M31 = arr[8],
-                M32 = arr[9],
-                M33 = arr[10],
-                M34 = arr[11],
-                M41 = arr[12],
-                M42 = arr[13],
-                M43 = arr[14],
-                M44 = arr[15]
-            };
-        }
-    }
 
     public struct WarpData
     {
@@ -123,3 +128,4 @@ namespace WarpDriveClient
         public Vector3D StepVector;
     }
 }
+    }

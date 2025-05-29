@@ -44,12 +44,17 @@ namespace WarpDriveClient
                         snapMatrix.Translation = ent.PositionComp.GetPosition();
                         ent.PositionComp.SetWorldMatrix(ref snapMatrix);
                         ent.Physics?.ClearSpeed();
+                        ClientWarpState.BeginCooldown(msg.GridId);
                     }
 
                     if (!string.IsNullOrWhiteSpace(msg.Reason))
+                    {
                         MyAPIGateway.Utilities.ShowNotification(msg.Reason, msg.TimeMs, msg.Font);
-                }
-                else
+
+                    }
+
+            }
+            else
                 {
                     MyAPIGateway.Utilities.ShowMessage("WarpDebug", $"Stop packet received but GridId {msg.GridId} not found in ActiveWarps.");
                 }

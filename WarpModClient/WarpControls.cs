@@ -32,6 +32,7 @@ namespace WarpDriveClient
     {
         private static bool _controlsCreated = false;
         private static readonly Dictionary<long, string> gpsInputStorage = new Dictionary<long, string>();
+        public static Dictionary<long, ClientWarpState> ChargingWarps = new Dictionary<long, ClientWarpState>();
 
         // Define warp speeds per block subtype
         private static readonly Dictionary<string, double> BlockSubtypeSpeeds = new Dictionary<string, double>(System.StringComparer.OrdinalIgnoreCase)
@@ -47,7 +48,6 @@ namespace WarpDriveClient
             if (_controlsCreated || MyAPIGateway.Utilities.IsDedicated)
                 return;
             string val;
-            double _speed;
 
             MyAPIGateway.TerminalControls.CustomControlGetter += (block, controls) =>
             {
@@ -98,6 +98,21 @@ namespace WarpDriveClient
             if (grid == null)
                 return;
 
+            if (ClientWarpState.IsCoolingDown(block.CubeGrid.EntityId))
+            {
+                var remaining = ClientWarpState.GetCooldownRemaining(block.CubeGrid.EntityId);
+                string timeLeft = remaining?.TotalSeconds.ToString("0.0");
+                MyAPIGateway.Utilities.ShowNotification($"Warp on cooldown. Try again in {timeLeft} seconds.", 4000, "Red");
+                return; // Cancel warp trigger
+            }
+
+            if (ClientWarpState.IsCharging(grid.EntityId))
+            {
+                //MyAPIGateway.Utilities.ShowNotification($"Warp charge cancelled.", 4000, "Red");
+                ClientWarpState.TryCancelWarp(grid.EntityId);
+                return;
+            }
+
             string input = gpsInputStorage.TryGetValue(blockRef.EntityId, out val) ? val : null;
 
             string gpsName = "Destination";
@@ -113,10 +128,9 @@ namespace WarpDriveClient
 
             WarpMode mode = destination.HasValue ? WarpMode.Guided : WarpMode.Free;
 
-            MyAPIGateway.Utilities.ShowNotification(mode == WarpMode.Guided ? $"Initiating warp to {gpsName}" : "Initiating free warp", 3000, "White");
-
             double speed = BlockSubtypeSpeeds.TryGetValue(blockRef.BlockDefinition.SubtypeName, out configuredSpeed)
                 ? configuredSpeed : 30000;
+            long entityId = block.EntityId;
 
             var msg = new WarpRequestMessage
             {
@@ -127,7 +141,20 @@ namespace WarpDriveClient
             };
 
             var data = MyAPIGateway.Utilities.SerializeToBinary(msg);
-            MyAPIGateway.Multiplayer.SendMessageToServer(WARP_REQUEST_ID, data);
+
+            var state = new ClientWarpState
+            {
+                GridId = grid.EntityId,
+                StepVector = Vector3D.Zero, // Will be set by server on sync
+                StartMatrix = grid.WorldMatrix,
+                State = WarpVisualState.Charging,
+                ChargingTicksRemaining = 10 * 60, // 10 seconds at 60 ticks/sec
+                CooldownTicksRemaining = 0,
+                PendingWarpData = data
+            };
+
+            WarpStartReceiver.ActiveWarps[grid.EntityId] = state;
+            MyAPIGateway.Utilities.ShowNotification(mode == WarpMode.Guided ? $"Charging for warp to {gpsName}... {speed}" : $"Charging for free warp... {speed}", 6000, "White");
         }
 
         private static bool TryParseGPS(string text, out Vector3D result, out string name)
