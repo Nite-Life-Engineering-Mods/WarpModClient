@@ -61,7 +61,7 @@ namespace WarpDriveClient
                     state.StepVector = message.StepVector;
                     ent.PositionComp.SetWorldMatrix(ref state.StartMatrix);
                     ent.Physics?.ClearSpeed();
-                    SoundUtility.Play(ent as IMyCubeGrid, WarpSounds.WarpCharge);
+                    SoundUtility.Play(ent as IMyCubeGrid, WarpSounds.WarpTravel);
                 }
                 
             }
@@ -92,13 +92,13 @@ namespace WarpDriveClient
                 {
                     case WarpVisualState.Charging:
                         MyAPIGateway.Utilities.ShowNotification($"State: Charging", 20, "Red");
-
+                        SoundUtility.Play(ent as IMyCubeGrid, WarpSounds.WarpCharge);
                         if (--warp.ChargingTicksRemaining <= 0)
                         {
                             MyAPIGateway.Utilities.ShowNotification($"State: Warping", 20, "Red");
 
                             warp.State = WarpVisualState.Warping;
-                            SoundUtility.Play(ent as IMyCubeGrid, WarpSounds.WarpTravel);
+                            
                         }
                         break;
 

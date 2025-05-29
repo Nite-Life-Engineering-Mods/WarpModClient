@@ -141,19 +141,31 @@ namespace WarpDriveClient
             };
 
             var data = MyAPIGateway.Utilities.SerializeToBinary(msg);
-
-            var state = new ClientWarpState
+            ClientWarpState state;
+            if (!WarpStartReceiver.ActiveWarps.TryGetValue(grid.EntityId, out state))
             {
-                GridId = grid.EntityId,
-                StepVector = Vector3D.Zero, // Will be set by server on sync
-                StartMatrix = grid.WorldMatrix,
-                State = WarpVisualState.Charging,
-                ChargingTicksRemaining = 10 * 60, // 10 seconds at 60 ticks/sec
-                CooldownTicksRemaining = 0,
-                PendingWarpData = data
-            };
+                state = new ClientWarpState
+                {
+                    GridId = grid.EntityId,
+                    StepVector = Vector3D.Zero, // Will be updated on server response
+                    StartMatrix = grid.WorldMatrix,
+                    ChargingTicksRemaining = 10 * 60, // 10 seconds
+                    CooldownTicksRemaining = 0,
+                    State = WarpVisualState.Charging,
+                    PendingWarpData = data
+                };
+                WarpStartReceiver.ActiveWarps[grid.EntityId] = state;
+            }
+            else
+            {
+                state.StepVector = Vector3D.Zero;
+                state.StartMatrix = grid.WorldMatrix;
+                state.State = WarpVisualState.Charging;
+                state.ChargingTicksRemaining = 10 * 60;
+                state.CooldownTicksRemaining = 0;
+                state.PendingWarpData = data;
+            }
 
-            WarpStartReceiver.ActiveWarps[grid.EntityId] = state;
             MyAPIGateway.Utilities.ShowNotification(mode == WarpMode.Guided ? $"Charging for warp to {gpsName}... {speed}" : $"Charging for free warp... {speed}", 6000, "White");
         }
 
