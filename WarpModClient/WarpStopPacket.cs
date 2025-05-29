@@ -35,7 +35,7 @@ namespace WarpDriveClient
             {
                 var msg = MyAPIGateway.Utilities.SerializeFromBinary<WarpStopMessage>(data);
 
-                if (WarpStartReceiver.ActiveWarps.Remove(msg.GridId))
+                if (ClientWarpState.BeginCooldown(msg.GridId))
                 {
                     IMyEntity ent;
                     if (MyAPIGateway.Entities.TryGetEntityById(msg.GridId, out ent))
@@ -44,7 +44,7 @@ namespace WarpDriveClient
                         snapMatrix.Translation = ent.PositionComp.GetPosition();
                         ent.PositionComp.SetWorldMatrix(ref snapMatrix);
                         ent.Physics?.ClearSpeed();
-                        ClientWarpState.BeginCooldown(msg.GridId);
+                        
                     }
 
                     if (!string.IsNullOrWhiteSpace(msg.Reason))

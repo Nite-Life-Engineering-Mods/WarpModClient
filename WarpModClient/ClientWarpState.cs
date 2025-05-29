@@ -22,13 +22,20 @@ namespace WarpDriveClient
         public int ChargingTicksRemaining;
         public int CooldownTicksRemaining;
         public byte[] PendingWarpData;
-        private static readonly Dictionary<long, DateTime> GridCooldowns = new Dictionary<long, DateTime>();
         private static readonly TimeSpan DefaultCooldown = TimeSpan.FromSeconds(15); // Can make this configurable
 
-        public static void BeginCooldown(long gridId)
+        public static bool BeginCooldown(long gridId, int ticks = 120)
         {
-            GridCooldowns[gridId] = DateTime.UtcNow + DefaultCooldown;
+            ClientWarpState state;
+            if (WarpStartReceiver.ActiveWarps.TryGetValue(gridId, out state))
+            {
+                state.State = WarpVisualState.Cooldown;
+                state.CooldownTicksRemaining = ticks;
+                return true;
+            }
+            return false;
         }
+
 
         public static bool IsCharging(long gridId)
         {
@@ -38,10 +45,20 @@ namespace WarpDriveClient
             return WarpStartReceiver.ActiveWarps.TryGetValue(gridId, out state) && state.State == WarpVisualState.Charging;
         }
 
-        public static bool IsCoolingDown(long gridId)
+        public static bool IsCoolingDown(long gridId, out TimeSpan remaining)
         {
-            DateTime until;
-            return GridCooldowns.TryGetValue(gridId, out until) && DateTime.UtcNow < until;
+            ClientWarpState active;
+            if (WarpStartReceiver.ActiveWarps.TryGetValue(gridId, out active) &&
+            active.State == WarpVisualState.Cooldown)
+            {
+                double time = active.CooldownTicksRemaining / 60.0;
+                remaining = TimeSpan.FromSeconds(time);
+                // Is cooling down.
+                return true;
+            }
+            remaining = TimeSpan.FromSeconds(0);
+            return false;
+
         }
 
         public static bool TryCancelWarp(long gridId)
@@ -73,17 +90,19 @@ namespace WarpDriveClient
 
         public static TimeSpan? GetCooldownRemaining(long gridId)
         {
-            DateTime until;
-            if (GridCooldowns.TryGetValue(gridId, out until))
+            ClientWarpState state;
+            if (WarpStartReceiver.ActiveWarps.TryGetValue(gridId, out state) &&
+                state.State == WarpVisualState.Cooldown)
             {
-                var remaining = until - DateTime.UtcNow;
-                return remaining > TimeSpan.Zero ? (TimeSpan?)remaining : null;
-
+                double secondsRemaining = state.CooldownTicksRemaining / 60.0;
+                return TimeSpan.FromSeconds(secondsRemaining);
             }
+
             return null;
         }
-    }
-
-
 
     }
+
+
+
+}

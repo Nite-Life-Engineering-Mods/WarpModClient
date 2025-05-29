@@ -2,6 +2,7 @@
 using Sandbox.Game.Debugging;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces.Terminal;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -97,11 +98,10 @@ namespace WarpDriveClient
             var grid = blockRef.CubeGrid;
             if (grid == null)
                 return;
-
-            if (ClientWarpState.IsCoolingDown(block.CubeGrid.EntityId))
+            TimeSpan remaining;
+            if (ClientWarpState.IsCoolingDown(block.CubeGrid.EntityId, out remaining))
             {
-                var remaining = ClientWarpState.GetCooldownRemaining(block.CubeGrid.EntityId);
-                string timeLeft = remaining?.TotalSeconds.ToString("0.0");
+                string timeLeft = remaining.TotalSeconds.ToString("0.0");
                 MyAPIGateway.Utilities.ShowNotification($"Warp on cooldown. Try again in {timeLeft} seconds.", 4000, "Red");
                 return; // Cancel warp trigger
             }
