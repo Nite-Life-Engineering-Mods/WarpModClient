@@ -8,6 +8,7 @@ using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
+using static VRage.Game.MyObjectBuilder_ControllerSchemaDefinition;
 using static VRage.Game.MyObjectBuilder_SessionComponentMission;
 
 namespace WarpDriveClient
@@ -94,6 +95,7 @@ namespace WarpDriveClient
                         {
                             SoundUtility.Play(ent as IMyCubeGrid, WarpSounds.WarpCharge);
                             warp.EnteredCharging = true;
+                            ControlUtility.LockControls(ent as IMyCubeGrid);
                         }
 
                         if (--warp.ChargingTicksRemaining <= 0)
@@ -127,6 +129,8 @@ namespace WarpDriveClient
                         {
                             MyAPIGateway.Utilities.ShowNotification("Cooldown started.", 1000, "Red");
                             warp.EnteredCooldown = true;
+                            ControlUtility.RestoreControls(ent as IMyCubeGrid);
+
                         }
 
                         if (--warp.CooldownTicksRemaining <= 0)

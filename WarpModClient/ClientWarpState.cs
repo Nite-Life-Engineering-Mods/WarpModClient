@@ -27,8 +27,9 @@ namespace WarpDriveClient
         public bool EnteredCharging = false;
         public bool EnteredWarping = false;
         public bool EnteredCooldown = false;
+        public double speed;
 
-        public static bool BeginCooldown(long gridId, int ticks = 15000)
+        public static bool BeginCooldown(long gridId, int ticks = 900)
         {
             ClientWarpState state;
             if (WarpStartReceiver.ActiveWarps.TryGetValue(gridId, out state))
@@ -49,6 +50,11 @@ namespace WarpDriveClient
             ClientWarpState state;
             return WarpStartReceiver.ActiveWarps.TryGetValue(gridId, out state) && state.State == WarpVisualState.Charging;
         }
+        public static bool TryGetWarpState(long gridId, out ClientWarpState state)
+        {
+            return WarpStartReceiver.ActiveWarps.TryGetValue(gridId, out state);
+        }
+
 
         public static bool IsWarping(long gridId)
         {

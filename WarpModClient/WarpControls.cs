@@ -44,6 +44,17 @@ namespace WarpDriveClient
 
         public static ushort WARP_REQUEST_ID = 42700;
 
+
+        public static double Get_Speed(string Subtype)
+        {
+            double speed;
+            if (BlockSubtypeSpeeds.TryGetValue(Subtype, out speed))
+            {
+                return speed / 1000;
+            }
+            return 0;
+        }
+
         public static void Create()
         {
             if (_controlsCreated || MyAPIGateway.Utilities.IsDedicated)
@@ -102,7 +113,7 @@ namespace WarpDriveClient
             if (WarpStartReceiver.ActiveWarps.TryGetValue(grid.EntityId, out existing) &&
                 existing.State == WarpVisualState.Cooldown)
             {
-                MyAPIGateway.Utilities.ShowNotification("Warp is cooling down...", 5000, "Red");
+                MyAPIGateway.Utilities.ShowNotification($"Warp is cooling down...", 5000, "Red");
                 return;
             }
 
@@ -159,7 +170,8 @@ namespace WarpDriveClient
                     ChargingTicksRemaining = 10 * 60, // 10 seconds
                     CooldownTicksRemaining = 0,
                     State = WarpVisualState.Charging,
-                    PendingWarpData = data
+                    PendingWarpData = data,
+                    speed = speed
                 };
                 WarpStartReceiver.ActiveWarps[grid.EntityId] = state;
             }
@@ -171,6 +183,7 @@ namespace WarpDriveClient
                 state.ChargingTicksRemaining = 10 * 60;
                 state.CooldownTicksRemaining = 0;
                 state.PendingWarpData = data;
+                state.speed = speed;
             }
 
             MyAPIGateway.Utilities.ShowNotification(mode == WarpMode.Guided ? $"Charging for warp to {gpsName}..." : $"Charging...", 6000, "White");

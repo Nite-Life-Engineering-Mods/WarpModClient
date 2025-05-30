@@ -40,12 +40,12 @@ namespace WarpDriveClient
                     IMyEntity ent;
                     if (MyAPIGateway.Entities.TryGetEntityById(msg.GridId, out ent))
                     {
-                    SoundUtility.Play(ent as IMyCubeGrid, WarpSounds.WarpExit);
+                        SoundUtility.Play(ent as IMyCubeGrid, WarpSounds.WarpExit);
                         var snapMatrix = ent.WorldMatrix;
                         snapMatrix.Translation = ent.PositionComp.GetPosition();
                         ent.PositionComp.SetWorldMatrix(ref snapMatrix);
                         ent.Physics?.ClearSpeed();
-                        
+                        MyAPIGateway.Utilities.ShowMessage("OnStop", $"Reported position clientside: {ent.PositionComp.GetPosition()}");
                     }
 
                     if (!string.IsNullOrWhiteSpace(msg.Reason))
