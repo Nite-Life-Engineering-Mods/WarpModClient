@@ -39,6 +39,16 @@ namespace WarpDriveClient
             }
         }
 
+        public static bool IsPlaying(IMyEntity entity)
+        {
+            MyEntity3DSoundEmitter emitter;
+            if (Emitters.TryGetValue(entity.EntityId, out emitter) && emitter.IsPlaying)
+            {
+                return true;
+            }
+            return false;
+        }
+
         public static void StopAll()
         {
             foreach (var emitter in Emitters.Values)

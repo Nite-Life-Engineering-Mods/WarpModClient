@@ -2,6 +2,7 @@
 using System;
 using Sandbox.ModAPI;
 using VRageMath;
+using ProtoBuf;
 
 namespace WarpDriveClient
 {
@@ -27,11 +28,12 @@ namespace WarpDriveClient
         public bool EnteredWarping = false;
         public bool EnteredCooldown = false;
 
-        public static bool BeginCooldown(long gridId, int ticks = 120)
+        public static bool BeginCooldown(long gridId, int ticks = 15000)
         {
             ClientWarpState state;
             if (WarpStartReceiver.ActiveWarps.TryGetValue(gridId, out state))
             {
+
                 state.State = WarpVisualState.Cooldown;
                 state.CooldownTicksRemaining = ticks;
                 return true;
@@ -46,6 +48,12 @@ namespace WarpDriveClient
 
             ClientWarpState state;
             return WarpStartReceiver.ActiveWarps.TryGetValue(gridId, out state) && state.State == WarpVisualState.Charging;
+        }
+
+        public static bool IsWarping(long gridId)
+        {
+            ClientWarpState state;
+            return WarpStartReceiver.ActiveWarps.TryGetValue(gridId, out state) && state.State == WarpVisualState.Warping;
         }
 
         public static bool IsCoolingDown(long gridId, out TimeSpan remaining)
@@ -68,25 +76,32 @@ namespace WarpDriveClient
         {
             if (WarpStartReceiver.ActiveWarps.ContainsKey(gridId))
             {
-                WarpStartReceiver.ActiveWarps.Remove(gridId);
-                MyAPIGateway.Utilities.ShowNotification("Warp canceled.", 2000, "Red");
-                return true;
+                if (IsWarping(gridId))
+                {
+                    var msg = new WarpRequestMessage
+                    {
+                        GridId = gridId,
+                        Destination = Vector3D.Zero,
+                        Speed = 0,
+                        Mode = WarpMode.Free
+                    };
+
+                    var data = MyAPIGateway.Utilities.SerializeToBinary(msg); MyAPIGateway.Multiplayer.SendMessageToServer(WarpControls.WARP_REQUEST_ID, data);
+                    MyAPIGateway.Utilities.ShowNotification("Warp has been completed.", 6000, "White");
+                    return true;
+                }
+                if (IsCharging(gridId))
+                {
+                    TryCancelWarp(gridId);
+                    MyAPIGateway.Utilities.ShowNotification("Chaging has been cancelled.", 6000, "White");
+                    return true;
+                }
             }
             return false;
         }
 
         public void TrySendPendingRequest()
         {
-            if (ChargingTicksRemaining.ToString() == null)
-                MyAPIGateway.Utilities.ShowNotification($"Charging Ticks not passed.", 1000, "Red");
-            //MyAPIGateway.Utilities.ShowNotification($"Charging: {ChargingTicksRemaining}", 1000, "Red");
-
-            if (PendingWarpData != null)
-            {
-                MyAPIGateway.Utilities.ShowNotification($"Pending Warp Data passed.", 5000, "White");
-
-            }
-
             if (ChargingTicksRemaining > 0 || PendingWarpData == null)
                 return;
             MyAPIGateway.Multiplayer.SendMessageToServer(WarpControls.WARP_REQUEST_ID, PendingWarpData);

@@ -100,7 +100,7 @@ namespace WarpDriveClient
                 return;
             ClientWarpState existing;
             if (WarpStartReceiver.ActiveWarps.TryGetValue(grid.EntityId, out existing) &&
-    existing.State == WarpVisualState.Cooldown)
+                existing.State == WarpVisualState.Cooldown)
             {
                 MyAPIGateway.Utilities.ShowNotification("Warp is cooling down...", 5000, "Red");
                 return;
@@ -110,6 +110,13 @@ namespace WarpDriveClient
             {
                 //MyAPIGateway.Utilities.ShowNotification($"Warp charge cancelled.", 4000, "Red");
                 ClientWarpState.TryCancelWarp(grid.EntityId);
+                return;
+            }
+
+            if (ClientWarpState.IsWarping(grid.EntityId))
+            {
+                ClientWarpState.TryCancelWarp(grid.EntityId);
+                ClientWarpState.BeginCooldown(grid.EntityId);
                 return;
             }
 
@@ -166,7 +173,7 @@ namespace WarpDriveClient
                 state.PendingWarpData = data;
             }
 
-            MyAPIGateway.Utilities.ShowNotification(mode == WarpMode.Guided ? $"Charging for warp to {gpsName}... {speed}" : $"Charging for free warp... {speed}", 6000, "White");
+            MyAPIGateway.Utilities.ShowNotification(mode == WarpMode.Guided ? $"Charging for warp to {gpsName}..." : $"Charging...", 6000, "White");
         }
 
         private static bool TryParseGPS(string text, out Vector3D result, out string name)
