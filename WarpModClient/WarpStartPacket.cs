@@ -6,7 +6,9 @@ using System.Linq;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
+using VRage.Utils;
 using VRageMath;
+using static VRage.Game.MyObjectBuilder_SessionComponentMission;
 
 namespace WarpDriveClient
 {
@@ -55,7 +57,7 @@ namespace WarpDriveClient
             if (MyAPIGateway.Entities.TryGetEntityById(message.GridId, out ent))
             {
                 ClientWarpState state;
-                if (WarpStartReceiver.ActiveWarps.TryGetValue(ent.EntityId, out state))
+                if (ActiveWarps.TryGetValue(ent.EntityId, out state))
                 {
                     state.StartMatrix = message.ToMatrix();
                     state.StepVector = message.StepVector;
@@ -80,44 +82,61 @@ namespace WarpDriveClient
                 MyAPIGateway.Utilities.ShowNotification($"State: {kv.Value.State}", 20, "Red");
                 kv.Value.TrySendPendingRequest();
             }
+            MyLog.Default.WriteLineAndConsole($"Number of Warps: {ActiveWarps.ToList().Count}");
             foreach (var pair in ActiveWarps.ToList())
             {
+                
                 var warp = pair.Value;
                 IMyEntity ent;
 
                 if (!MyAPIGateway.Entities.TryGetEntityById(warp.GridId, out ent))
                     continue;
-                
+
                 switch (warp.State)
                 {
                     case WarpVisualState.Charging:
-                        MyAPIGateway.Utilities.ShowNotification($"State: Charging", 20, "Red");
-                        SoundUtility.Play(ent as IMyCubeGrid, WarpSounds.WarpCharge);
+                        if (!warp.EnteredCharging)
+                        {
+                            //MyAPIGateway.Utilities.ShowNotification("State: Charging", 7000, "White");
+                            SoundUtility.Play(ent as IMyCubeGrid, WarpSounds.WarpCharge);
+                            warp.EnteredCharging = true;
+                        }
+
                         if (--warp.ChargingTicksRemaining <= 0)
                         {
-                            MyAPIGateway.Utilities.ShowNotification($"State: Warping", 20, "Red");
-
                             warp.State = WarpVisualState.Warping;
-                            
+                            warp.EnteredWarping = false; // reset flag for next state
                         }
                         break;
 
                     case WarpVisualState.Warping:
+                        if (!warp.EnteredWarping)
+                        {
+                            MyAPIGateway.Utilities.ShowNotification("State: Warping", 7000, "Red");
+                            SoundUtility.Play(ent as IMyCubeGrid, WarpSounds.WarpTravel);
+                            WarpTrailRenderer.DrawWarpTrailsFromThrusters(ent as IMyCubeGrid);
+                            warp.EnteredWarping = true;
+                        }
+
                         var matrix = ent.WorldMatrix;
                         matrix.Translation += warp.StepVector;
                         ent.PositionComp.SetWorldMatrix(ref matrix);
                         ent.Physics?.ClearSpeed();
 
-                        var grid = ent as IMyCubeGrid;
-                        if (grid != null)
-                            WarpTrailRenderer.DrawWarpTrailsFromThrusters(grid);
                         break;
 
                     case WarpVisualState.Cooldown:
+                        if (!warp.EnteredCooldown)
+                        {
+                            MyAPIGateway.Utilities.ShowNotification("Cooldown started.", 1000, "Red");
+                            warp.EnteredCooldown = true;
+                        }
+
                         if (--warp.CooldownTicksRemaining <= 0)
                             ActiveWarps.Remove(warp.GridId);
                         break;
                 }
+
             }
 
         }

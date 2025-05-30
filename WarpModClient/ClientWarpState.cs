@@ -23,6 +23,9 @@ namespace WarpDriveClient
         public int CooldownTicksRemaining;
         public byte[] PendingWarpData;
         private static readonly TimeSpan DefaultCooldown = TimeSpan.FromSeconds(15); // Can make this configurable
+        public bool EnteredCharging = false;
+        public bool EnteredWarping = false;
+        public bool EnteredCooldown = false;
 
         public static bool BeginCooldown(long gridId, int ticks = 120)
         {
@@ -78,8 +81,11 @@ namespace WarpDriveClient
                 MyAPIGateway.Utilities.ShowNotification($"Charging Ticks not passed.", 1000, "Red");
             //MyAPIGateway.Utilities.ShowNotification($"Charging: {ChargingTicksRemaining}", 1000, "Red");
 
-            if (PendingWarpData == null)
-                MyAPIGateway.Utilities.ShowNotification($"Pending Warp Data not passed.", 1000, "Red");
+            if (PendingWarpData != null)
+            {
+                MyAPIGateway.Utilities.ShowNotification($"Pending Warp Data passed.", 5000, "White");
+
+            }
 
             if (ChargingTicksRemaining > 0 || PendingWarpData == null)
                 return;

@@ -98,12 +98,12 @@ namespace WarpDriveClient
             var grid = blockRef.CubeGrid;
             if (grid == null)
                 return;
-            TimeSpan remaining;
-            if (ClientWarpState.IsCoolingDown(block.CubeGrid.EntityId, out remaining))
+            ClientWarpState existing;
+            if (WarpStartReceiver.ActiveWarps.TryGetValue(grid.EntityId, out existing) &&
+    existing.State == WarpVisualState.Cooldown)
             {
-                string timeLeft = remaining.TotalSeconds.ToString("0.0");
-                MyAPIGateway.Utilities.ShowNotification($"Warp on cooldown. Try again in {timeLeft} seconds.", 4000, "Red");
-                return; // Cancel warp trigger
+                MyAPIGateway.Utilities.ShowNotification("Warp is cooling down...", 5000, "Red");
+                return;
             }
 
             if (ClientWarpState.IsCharging(grid.EntityId))
