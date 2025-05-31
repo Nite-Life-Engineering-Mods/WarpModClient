@@ -3,6 +3,7 @@ using Sandbox.Game;
 using Sandbox.ModAPI;
 using System.Collections.Generic;
 using System.Linq;
+using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
@@ -93,6 +94,11 @@ namespace WarpDriveClient
                     case WarpVisualState.Charging:
                         if (!warp.EnteredCharging)
                         {
+                            var startmatrix = ent.WorldMatrix;
+                            startmatrix.Translation = ent.PositionComp.GetPosition(); // center of ship
+
+                            WarpEffectUtility.PlayEffect(ent as IMyCubeGrid);
+
                             SoundUtility.Play(ent as IMyCubeGrid, WarpSounds.WarpCharge);
                             warp.EnteredCharging = true;
                             ControlUtility.LockControls(ent as IMyCubeGrid);

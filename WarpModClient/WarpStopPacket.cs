@@ -45,7 +45,7 @@ namespace WarpDriveClient
                         snapMatrix.Translation = ent.PositionComp.GetPosition();
                         ent.PositionComp.SetWorldMatrix(ref snapMatrix);
                         ent.Physics?.ClearSpeed();
-                        MyAPIGateway.Utilities.ShowMessage("OnStop", $"Reported position clientside: {ent.PositionComp.GetPosition()}");
+                        //MyAPIGateway.Utilities.ShowMessage("OnStop", $"Reported position clientside: {ent.PositionComp.GetPosition()}");
                     }
 
                     if (!string.IsNullOrWhiteSpace(msg.Reason))

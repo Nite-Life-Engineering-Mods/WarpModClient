@@ -23,7 +23,6 @@ namespace WarpDriveClient
         public int ChargingTicksRemaining;
         public int CooldownTicksRemaining;
         public byte[] PendingWarpData;
-        private static readonly TimeSpan DefaultCooldown = TimeSpan.FromSeconds(15); // Can make this configurable
         public bool EnteredCharging = false;
         public bool EnteredWarping = false;
         public bool EnteredCooldown = false;
