@@ -102,7 +102,6 @@ namespace WarpDriveClient
 
                             SoundUtility.Play(ent as IMyCubeGrid, WarpSounds.WarpCharge);
                             warp.EnteredCharging = true;
-                            ControlUtility.LockControls(ent as IMyCubeGrid);
                         }
 
                         if (--warp.ChargingTicksRemaining <= 0)
@@ -116,7 +115,7 @@ namespace WarpDriveClient
                     case WarpVisualState.Warping:
                         if (!warp.EnteredWarping)
                         {
-                            WarpTrailRenderer.DrawWarpTrailsFromThrusters(ent as IMyCubeGrid);
+                            ControlUtility.LockControls(ent as IMyCubeGrid);
                             warp.EnteredWarping = true;
                         }
                         if (!SoundUtility.IsPlaying(ent))
@@ -140,6 +139,10 @@ namespace WarpDriveClient
 
                         ent.PositionComp.SetWorldMatrix(ref matrix);
                         ent.Physics?.ClearSpeed();
+                        if (ent != null)
+                        {
+                            WarpTrailRenderer.DrawWarpTrailsFromThrusters(ent as IMyCubeGrid);
+                        }
 
                         break;
 

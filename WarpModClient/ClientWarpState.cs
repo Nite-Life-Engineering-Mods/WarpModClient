@@ -98,8 +98,8 @@ namespace WarpDriveClient
                 }
                 if (IsCharging(gridId))
                 {
-                    TryCancelWarp(gridId);
-                    MyAPIGateway.Utilities.ShowNotification("Chaging has been cancelled.", 6000, "White");
+                    WarpStartReceiver.ActiveWarps.Remove(gridId);
+                    MyAPIGateway.Utilities.ShowNotification("Charging has been cancelled.", 6000, "White");
                     return true;
                 }
             }
