@@ -55,26 +55,29 @@ namespace WarpDriveClient
         private void OnStart(ushort id, byte[] data, ulong sender, bool fromServer)
         {
             var message = MyAPIGateway.Utilities.SerializeFromBinary<WarpStartMessage>(data);
-
             IMyEntity ent;
             if (MyAPIGateway.Entities.TryGetEntityById(message.GridId, out ent))
             {
                 ClientWarpState state;
-                if (ActiveWarps.TryGetValue(ent.EntityId, out state))
+                if (!ActiveWarps.TryGetValue(ent.EntityId, out state))
                 {
-                    state.StartMatrix = message.ToMatrix();
-                    state.StepVector = message.StepVector;
-                    ent.PositionComp.SetWorldMatrix(ref state.StartMatrix);
-                    state.State = WarpVisualState.Warping;
-                    ent.Physics?.ClearSpeed();
-                    SoundUtility.Play(ent as IMyCubeGrid, WarpSounds.WarpTravel);
+                    state = new ClientWarpState
+                    {
+                        GridId = message.GridId,
+                        EnteredWarping = false,
+                        speed = message.StepVector.Length() * 60, // meters/sec
+                    };
+                    ActiveWarps[ent.EntityId] = state;
                 }
-                
+
+                state.StartMatrix = message.ToMatrix();
+                state.StepVector = message.StepVector;
+                ent.PositionComp.SetWorldMatrix(ref state.StartMatrix);
+                state.State = WarpVisualState.Warping;
+                ent.Physics?.ClearSpeed();
             }
-
-            
-
         }
+
 
         public override void UpdateAfterSimulation()
         {

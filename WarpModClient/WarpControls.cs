@@ -36,7 +36,7 @@ namespace WarpDriveClient
         public static Dictionary<long, ClientWarpState> ChargingWarps = new Dictionary<long, ClientWarpState>();
 
         // Define warp speeds per block subtype
-        private static readonly Dictionary<string, double> BlockSubtypeSpeeds = new Dictionary<string, double>(System.StringComparer.OrdinalIgnoreCase)
+        public static readonly Dictionary<string, double> BlockSubtypeSpeeds = new Dictionary<string, double>(System.StringComparer.OrdinalIgnoreCase)
         {
             { "CivilianWarpDriveSmall", 25000 },
             { "CivilianWarpDriveLarge", 50000 }
