@@ -150,6 +150,11 @@ namespace WarpDriveClient
                 ? configuredSpeed : 30000;
             long entityId = block.EntityId;
 
+            if (mode == WarpMode.Guided)
+            {
+                speed = speed / 2; // Half speed for guided warp.
+            }
+
             var msg = new WarpRequestMessage
             {
                 GridId = grid.EntityId,
