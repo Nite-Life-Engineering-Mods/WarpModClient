@@ -39,6 +39,7 @@ namespace WarpDriveClient
     {
         private const ushort PACKET_ID_START = 42154;
 
+
         public static Dictionary<long, ClientWarpState> ActiveWarps = new Dictionary<long, ClientWarpState>();
 
         public override void LoadData()
@@ -125,6 +126,18 @@ namespace WarpDriveClient
 
                         var matrix = ent.WorldMatrix;
                         matrix.Translation += warp.StepVector;
+                        Vector3D current = matrix.Translation;
+                        Vector3D desired = warp.LastCorrection;
+                        double drift = Vector3D.Distance(current, desired); // in meters
+                        double factor = drift / 10000.0;
+                        //MyAPIGateway.Utilities.ShowMessage("Drift", $"{factor}");
+                        if (factor < 0.01) factor = 0.25;
+                        else if (factor > 0.3) factor = 0.5;
+
+                        Vector3D corrected = Vector3D.Lerp(current, desired, factor);
+                        matrix.Translation = corrected;
+
+
                         ent.PositionComp.SetWorldMatrix(ref matrix);
                         ent.Physics?.ClearSpeed();
 

@@ -27,6 +27,7 @@ namespace WarpDriveClient
         public bool EnteredWarping = false;
         public bool EnteredCooldown = false;
         public double speed;
+        public Vector3D LastCorrection;
 
         public static bool BeginCooldown(long gridId, int ticks = 900)
         {

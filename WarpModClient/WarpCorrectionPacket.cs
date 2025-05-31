@@ -34,20 +34,16 @@ namespace WarpDriveClient
         {
             var msg = MyAPIGateway.Utilities.SerializeFromBinary<WarpCorrectionPacket>(data);
             IMyEntity ent;
-            if (!MyAPIGateway.Entities.TryGetEntityById(msg.GridId, out ent))
-                return;
-
-            var currentPos = ent.PositionComp.GetPosition();
-            double error = Vector3D.DistanceSquared(currentPos, msg.ServerPosition);
-
-            // Snap threshold: only correct if client is more than 5 meters off
-            if (error > 25.0)
+            if (MyAPIGateway.Entities.TryGetEntityById(msg.GridId, out ent))
             {
-                var m = ent.WorldMatrix;
-                m.Translation = msg.ServerPosition;
-                ent.PositionComp.SetWorldMatrix(ref m);
-                ent.Physics?.ClearSpeed();
+                ClientWarpState state;
+                if (ClientWarpState.TryGetWarpState(msg.GridId, out state))
+                {
+                    state.LastCorrection = msg.ServerPosition;
+                }
             }
+
         }
+
     }
 }
