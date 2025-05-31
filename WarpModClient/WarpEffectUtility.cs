@@ -1,6 +1,4 @@
 ﻿using Sandbox.Game.Entities;
-using Sandbox.Game.Entities.Character;
-using Sandbox.Game.GameSystems;
 using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.ModAPI;
@@ -12,33 +10,67 @@ namespace WarpDriveClient
 {
     public static class WarpEffectUtility
     {
+        private static readonly Dictionary<long, MyParticleEffect> ActiveEffects = new Dictionary<long, MyParticleEffect>();
 
         public static void PlayEffect(IMyCubeGrid grid, string effectName = "Warp", float scale = 2f)
         {
-            if (grid != null)
+            if (grid == null || ActiveEffects.ContainsKey(grid.EntityId))
+                return;
+
+            MatrixD matrix = GetWarpMatrix(grid);
+
+            Vector3D position = matrix.Translation;
+            MyParticleEffect effect;
+
+            if (MyParticlesManager.TryCreateParticleEffect(effectName, ref matrix, ref position, uint.MaxValue, out effect))
             {
-                MatrixD matrix = grid.WorldMatrix;
+                effect.UserScale = scale;
+                ActiveEffects[grid.EntityId] = effect;
+            }
+        }
 
-                // Flip orientation so the particle faces backward (for visual forward motion)
-                matrix.Forward = -matrix.Forward;
-                matrix.Up = -matrix.Up;
-                matrix.Right = Vector3D.Cross(matrix.Forward, matrix.Up);
+        public static void Update(IMyCubeGrid grid)
+        {
+            MyParticleEffect effect;
+            if (grid == null || !ActiveEffects.TryGetValue(grid.EntityId, out effect))
+                return;
 
-                // Offset the matrix *backward* along the flipped forward vector (which is ship's front)
-                double offset = Math.Max(grid.LocalAABB.HalfExtents.Z * 2.0, 30.0);
-                matrix.Translation -= matrix.Forward * offset;
-
-                Vector3D position = matrix.Translation;
-                MyParticleEffect effect;
-                if (MyParticlesManager.TryCreateParticleEffect(effectName, ref matrix, ref position, uint.MaxValue, out effect))
-                {
-                    effect.UserScale = scale;
-                }
-
+            if (effect.IsStopped)
+            {
+                ActiveEffects.Remove(grid.EntityId);
+                return;
             }
 
+            MatrixD matrix = GetWarpMatrix(grid);
+            effect.WorldMatrix = matrix;
+        }
 
+        public static void StopEffect(IMyCubeGrid grid)
+        {
+            if (grid == null)
+                return;
+            MyParticleEffect effect;
+            if (ActiveEffects.TryGetValue(grid.EntityId, out effect))
+            {
+                effect.Stop();
+                ActiveEffects.Remove(grid.EntityId);
+            }
+        }
 
+        private static MatrixD GetWarpMatrix(IMyCubeGrid grid)
+        {
+            MatrixD matrix = grid.WorldMatrix;
+
+            // Flip orientation so the particle faces backward
+            matrix.Forward = -matrix.Forward;
+            matrix.Up = -matrix.Up;
+            matrix.Right = Vector3D.Cross(matrix.Forward, matrix.Up);
+
+            // Offset in front of the ship (visual forward)
+            double offset = Math.Max(grid.LocalAABB.HalfExtents.Z * 2.0, 30.0);
+            matrix.Translation -= matrix.Forward * offset;
+
+            return matrix;
         }
     }
 }

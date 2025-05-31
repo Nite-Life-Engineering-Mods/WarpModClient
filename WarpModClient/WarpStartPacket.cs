@@ -93,20 +93,19 @@ namespace WarpDriveClient
                 switch (warp.State)
                 {
                     case WarpVisualState.Charging:
+                        warp.StartMatrix = ent.WorldMatrix;
                         if (!warp.EnteredCharging)
                         {
-                            var startmatrix = ent.WorldMatrix;
-                            startmatrix.Translation = ent.PositionComp.GetPosition(); // center of ship
-
                             WarpEffectUtility.PlayEffect(ent as IMyCubeGrid);
 
                             SoundUtility.Play(ent as IMyCubeGrid, WarpSounds.WarpCharge);
                             warp.EnteredCharging = true;
                         }
+                        WarpEffectUtility.Update(ent as IMyCubeGrid);
 
                         if (--warp.ChargingTicksRemaining <= 0)
                         {
-                            //warp.State = WarpVisualState.Warping;
+                            WarpEffectUtility.StopEffect(ent as IMyCubeGrid);
                             warp.EnteredWarping = false; // reset flag for next state
                             warp.TrySendPendingRequest();
                         }

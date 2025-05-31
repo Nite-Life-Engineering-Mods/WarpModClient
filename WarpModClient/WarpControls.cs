@@ -142,6 +142,7 @@ namespace WarpDriveClient
             {
                 destination = gps;
                 gpsName = name;
+                //gpsInputStorage.Remove(blockRef.EntityId); // Removes info from the gps field.
             }
 
             WarpMode mode = destination.HasValue ? WarpMode.Guided : WarpMode.Free;
