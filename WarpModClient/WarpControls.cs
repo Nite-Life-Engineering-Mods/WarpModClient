@@ -61,31 +61,27 @@ namespace WarpDriveClient
                 return;
             string val;
 
-            MyAPIGateway.TerminalControls.CustomControlGetter += (block, controls) =>
-            {
-                if (block?.BlockDefinition.SubtypeName == null || !BlockSubtypeSpeeds.ContainsKey(block.BlockDefinition.SubtypeName))
-                    return;
+            var gpsInput = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlTextbox, IMyUpgradeModule>("WarpGPSInput");
+            gpsInput.Title = MyStringId.GetOrCompute("Target GPS");
+            gpsInput.Tooltip = MyStringId.GetOrCompute("Enter a GPS coordinate or leave blank for Free Warp");
+            gpsInput.Getter = b => gpsInputStorage.TryGetValue(b.EntityId, out val) ? new StringBuilder(val) : new StringBuilder();
+            gpsInput.Setter = (b, v) => gpsInputStorage[b.EntityId] = v.ToString();
+            gpsInput.Enabled = b => true;
+            gpsInput.Visible = b => true;
 
-                var gpsInput = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlTextbox, IMyTerminalBlock>("WarpGPSInput");
-                gpsInput.Title = MyStringId.GetOrCompute("Target GPS");
-                gpsInput.Tooltip = MyStringId.GetOrCompute("Enter a GPS coordinate or leave blank for Free Warp");
-                gpsInput.Getter = b => gpsInputStorage.TryGetValue(b.EntityId, out val) ? new StringBuilder(val) : new StringBuilder();
-                gpsInput.Setter = (b, v) => gpsInputStorage[b.EntityId] = v.ToString();
-                gpsInput.Enabled = b => true;
-                gpsInput.Visible = b => true;
+            MyAPIGateway.TerminalControls.AddControl<IMyUpgradeModule>(gpsInput);
 
-                var warpButton = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlButton, IMyTerminalBlock>("StartWarp");
-                warpButton.Title = MyStringId.GetOrCompute("Toggle Warp");
-                warpButton.Tooltip = MyStringId.GetOrCompute("Start guided or free warp");
-                warpButton.Enabled = b => true;
-                warpButton.Visible = b => true;
-                warpButton.Action = ToggleWarpAction;
+            var warpButton = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlButton, IMyUpgradeModule>("StartWarp");
+            warpButton.Title = MyStringId.GetOrCompute("Toggle Warp");
+            warpButton.Tooltip = MyStringId.GetOrCompute("Start guided or free warp");
+            warpButton.Enabled = b => true;
+            warpButton.Visible = b => true;
+            warpButton.Action = ToggleWarpAction;
 
-                controls.Add(gpsInput);
-                controls.Add(warpButton);
-            };
+            MyAPIGateway.TerminalControls.AddControl<IMyUpgradeModule>(warpButton);
 
-            var action = MyAPIGateway.TerminalControls.CreateAction<IMyTerminalBlock>("ToggleWarp");
+
+            var action = MyAPIGateway.TerminalControls.CreateAction<IMyUpgradeModule>("ToggleWarp");
             action.Name = new StringBuilder("Toggle Warp");
             action.Icon = "Textures\\GUI\\Icons\\Actions\\Toggle.dds";
             action.Enabled = block => block != null && BlockSubtypeSpeeds.ContainsKey(block.BlockDefinition.SubtypeName);
@@ -93,7 +89,7 @@ namespace WarpDriveClient
             action.Action = ToggleWarpAction;
             action.Writer = (block, builder) => builder.Append("Warp");
 
-            MyAPIGateway.TerminalControls.AddAction<IMyTerminalBlock>(action);
+            MyAPIGateway.TerminalControls.AddAction<IMyUpgradeModule>(action);
 
 
             _controlsCreated = true;
