@@ -91,7 +91,12 @@ namespace WarpDriveClient
 
                 if (warp.State == WarpVisualState.Cooldown)
                 {
-                    // Just count down timer, do not touch grid at all
+                    if (!warp.EnteredCooldown)
+                    {
+                        // Restores controls. This does not run again.
+                        ControlUtility.RestoreControls(MyAPIGateway.Entities.GetEntityById(warp.GridId) as IMyCubeGrid);
+                        warp.EnteredCooldown = true;
+                    }
                     if (--warp.CooldownTicksRemaining <= 0)
                         ActiveWarps.Remove(warp.GridId);
 
