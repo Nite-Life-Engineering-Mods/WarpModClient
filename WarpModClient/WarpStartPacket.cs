@@ -88,8 +88,17 @@ namespace WarpDriveClient
             {
                 
                 var warp = pair.Value;
-                IMyEntity ent;
 
+                if (warp.State == WarpVisualState.Cooldown)
+                {
+                    // Just count down timer, do not touch grid at all
+                    if (--warp.CooldownTicksRemaining <= 0)
+                        ActiveWarps.Remove(warp.GridId);
+
+                    continue;
+                }
+
+                IMyEntity ent;
                 if (!MyAPIGateway.Entities.TryGetEntityById(warp.GridId, out ent))
                     continue;
 
@@ -146,19 +155,6 @@ namespace WarpDriveClient
                             WarpTrailRenderer.DrawWarpTrailsFromThrusters(ent as IMyCubeGrid);
                         }
 
-                        break;
-
-                    case WarpVisualState.Cooldown:
-                        if (!warp.EnteredCooldown)
-                        {
-                            MyAPIGateway.Utilities.ShowNotification("Cooldown started.", 1000, "Red");
-                            warp.EnteredCooldown = true;
-                            ControlUtility.RestoreControls(ent as IMyCubeGrid);
-
-                        }
-
-                        if (--warp.CooldownTicksRemaining <= 0)
-                            ActiveWarps.Remove(warp.GridId);
                         break;
                 }
 
