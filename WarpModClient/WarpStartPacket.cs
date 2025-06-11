@@ -1,5 +1,6 @@
 ﻿using ProtoBuf;
 using Sandbox.Game;
+using Sandbox.Game.Gui;
 using Sandbox.ModAPI;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,8 +10,6 @@ using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
-using static VRage.Game.MyObjectBuilder_ControllerSchemaDefinition;
-using static VRage.Game.MyObjectBuilder_SessionComponentMission;
 
 namespace WarpDriveClient
 {
@@ -113,16 +112,18 @@ namespace WarpDriveClient
                         warp.StartMatrix = ent.WorldMatrix;
                         if (!warp.EnteredCharging)
                         {
-                            WarpEffectUtility.PlayEffect(ent as IMyCubeGrid);
-
-                            SoundUtility.Play(ent as IMyCubeGrid, WarpSounds.WarpCharge);
+                            IMyCubeGrid grid = ent as IMyCubeGrid;
+                            WarpEffectUtility.PlayEffect(grid);
+                            SoundUtility.Play(grid, WarpSounds.WarpCharge);
                             warp.EnteredCharging = true;
                         }
+
                         WarpEffectUtility.Update(ent as IMyCubeGrid);
 
                         if (--warp.ChargingTicksRemaining <= 0)
                         {
-                            WarpEffectUtility.StopEffect(ent as IMyCubeGrid);
+                            IMyCubeGrid grid = ent as IMyCubeGrid;
+                            WarpEffectUtility.StopEffect(grid);
                             warp.EnteredWarping = false; // reset flag for next state
                             warp.TrySendPendingRequest();
                         }
@@ -167,7 +168,40 @@ namespace WarpDriveClient
 
         }
 
-    public struct WarpData
+        public static List<IMyPlayer> GetPlayersInGrid(IMyCubeGrid grid)
+        {
+            List<IMyPlayer> players = new List<IMyPlayer>();
+            MyAPIGateway.Players.GetPlayers(players);
+
+            List<IMyPlayer> playersInGrid = new List<IMyPlayer>();
+
+            foreach (var player in players)
+            {
+                if (player.Controller == null)
+                    continue;
+
+                var controller = player.Controller.ControlledEntity;
+                if (controller == null)
+                    continue;
+
+                var controlledEntity = controller.Entity;
+                if (controlledEntity == null)
+                    continue;
+
+                var block = controlledEntity as IMyCubeBlock;
+                if (block == null)
+                    continue;
+
+                if (block.CubeGrid == grid)
+                    playersInGrid.Add(player);
+            }
+
+            return playersInGrid;
+        }
+
+
+
+        public struct WarpData
     {
         public MatrixD StartMatrix;
         public Vector3D StepVector;
