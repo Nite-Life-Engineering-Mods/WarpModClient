@@ -71,7 +71,7 @@ namespace WarpDriveClient
 
                 state.StartMatrix = message.ToMatrix();
                 state.StepVector = message.StepVector;
-                ent.PositionComp.SetWorldMatrix(ref state.StartMatrix);
+                ent.PositionComp.SetPosition(state.StartMatrix.Translation);
                 state.State = WarpVisualState.Warping;
                 ent.Physics?.ClearSpeed();
             }
@@ -154,7 +154,11 @@ namespace WarpDriveClient
                         matrix.Translation = corrected;
 
 
-                        ent.PositionComp.SetWorldMatrix(ref matrix);
+                        if (++warp.InternalTickCounter % 3 == 0)
+                        {
+                            ent.PositionComp.SetPosition(corrected);
+                        }
+
                         ent.Physics?.ClearSpeed();
                         if (ent != null)
                         {
